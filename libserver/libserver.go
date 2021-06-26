@@ -44,7 +44,7 @@ func Initialize(e *echo.Echo) {
 func StartHTTP(svr *echo.Echo) {
 	// Start server
 	go func() {
-		if err := svr.Start(":" + os.Getenv("port")); err != nil {
+		if err := svr.Start(":" + os.Getenv("port")); err != http.ErrServerClosed {
 			logger.MakeLogEntry(nil, false).Error(err)
 			logger.MakeLogEntry(nil, false).Error("Fail start HTTP server")
 			logger.MakeLogEntry(nil, false).Error("Shutting down the server")
@@ -117,7 +117,7 @@ func StartHTTPS(svr *echo.Echo, svrInternal *echo.Echo) {
 	// Start HTTPS server
 	go func() {
 		//svr
-		if err := svr.StartServer(s); err != nil {
+		if err := svr.StartServer(s); err != http.ErrServerClosed {
 			logger.MakeLogEntry(nil, false).Error(err)
 			logger.MakeLogEntry(nil, false).Error("Shutting down server")
 			os.Exit(1)
@@ -127,7 +127,7 @@ func StartHTTPS(svr *echo.Echo, svrInternal *echo.Echo) {
 	// Start internal http server
 	if svrInternal != nil {
 		go func() {
-			if err := svrInternal.Start(":" + os.Getenv("ssl_port_internal")); err != nil {
+			if err := svrInternal.Start(":" + os.Getenv("ssl_port_internal")); err != http.ErrServerClosed {
 				logger.MakeLogEntry(nil, false).Error(err)
 				logger.MakeLogEntry(nil, false).Error("Fail start internal server")
 				logger.MakeLogEntry(nil, false).Error("Shutting down server")
