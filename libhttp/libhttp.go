@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 
+	"github.com/helloferdie/stdgo/libresponse"
 	"github.com/helloferdie/stdgo/logger"
 )
 
@@ -73,4 +75,43 @@ func RequestRaw(addr string, method string, payloadData map[string]interface{}, 
 	}
 
 	return string(resBody), res.StatusCode, err
+}
+
+// RequestMicroservice -
+func RequestMicroservice(f map[string]interface{}, addr string, method string, payloadData map[string]interface{}) (*libresponse.Default, int, error) {
+	headerData := map[string]string{
+		"X-Secret": os.Getenv("microservice_secret"),
+		"X-Locale": "0",
+	}
+	if f["header"] != nil {
+		if castedObject, ok := f["header"].(*libresponse.Header); ok {
+			headerData["Accept-Language"] = castedObject.AcceptLanguage
+			headerData["Accept-TZ"] = castedObject.AcceptTimezone
+			if castedObject.Authorization != "" {
+				headerData["Authorization"] = castedObject.Authorization
+			}
+		}
+	}
+
+	auditTrailURL := addr
+	if os.Getenv("audit_trail_gateway") == "1" {
+		auditTrailURL = os.Getenv("gateway_url") + addr
+	}
+	res, resCode, err := Request(auditTrailURL, method, payloadData, headerData)
+
+	def := new(libresponse.Default)
+	jsonString, _ := json.Marshal(res)
+	err = json.Unmarshal(jsonString, def)
+	if err != nil {
+		def.Code = 500
+		def.Message = "general.error_internal"
+		def.Error = "general.error_response_marshal_microservice"
+	}
+	return def, resCode, err
+}
+
+// RequestAuditTrails -
+func RequestAuditTrails(payloadData map[string]interface{}) (*libresponse.Default, int, error) {
+	res, resCode, err := RequestMicroservice(nil, os.Getenv("audit_trail_url_create"), "POST", payloadData)
+	return res, resCode, err
 }
