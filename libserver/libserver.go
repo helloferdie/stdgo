@@ -311,6 +311,11 @@ func ResponseLocale(data *libresponse.Default, lang string) *libresponse.Default
 // LoadLocale -
 func LoadLocale(syntax string, lang string, params []interface{}) string {
 	dirLocale := os.Getenv("dir_locale")
+	defaultLocale := os.Getenv("default_locale")
+	if defaultLocale == "" {
+		defaultLocale = "en"
+	}
+
 	split := strings.Split(syntax, ".")
 	if len(split) < 2 {
 		return LoadLocale("general.error_localization_syntax_not_valid", lang, []interface{}{syntax})
@@ -319,7 +324,7 @@ func LoadLocale(syntax string, lang string, params []interface{}) string {
 	filename := "/" + split[0] + ".json"
 	jsonFile, err := os.Open(dirLocale + "/" + lang + filename)
 	if err != nil {
-		jsonFile, err = os.Open(dirLocale + "/en" + filename)
+		jsonFile, err = os.Open(dirLocale + "/" + defaultLocale + filename)
 		if err != nil {
 			return LoadLocale("general.error_localization_file_not_found", lang, []interface{}{syntax})
 		}
@@ -358,8 +363,8 @@ func LoadLocale(syntax string, lang string, params []interface{}) string {
 		}
 		return fmt.Sprintf(val.(string), localeParams...)
 	}
-	if lang != "en" && syntax == "general.error_localization_syntax_not_found" {
-		lang = "en"
+	if lang != defaultLocale && syntax == "general.error_localization_syntax_not_found" {
+		lang = defaultLocale
 	}
 	return LoadLocale("general.error_localization_syntax_not_found", lang, []interface{}{syntax})
 }
