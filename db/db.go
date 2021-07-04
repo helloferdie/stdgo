@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/helloferdie/stdgo/libslice"
 	"github.com/helloferdie/stdgo/logger"
 
+	"github.com/go-sql-driver/mysql"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 )
@@ -499,4 +501,24 @@ func InsertMultiple(db *sqlx.DB, table string, data interface{}, value []interfa
 	}
 
 	return id, rows, err
+}
+
+// Regex for duplicate key
+var regexDuplicateKey = regexp.MustCompile(`'([^'']*)'`)
+
+// ParseError -
+func ParseError(err error) (int, string, error) {
+	p, ok := err.(*mysql.MySQLError)
+	if !ok {
+		return -1, "", err
+	}
+	if p.Number == 1062 {
+		key := ""
+		matches := regexDuplicateKey.FindAllStringSubmatch(p.Message, -1)
+		if len(matches) >= 2 {
+			key = matches[1][1]
+		}
+		return 1062, key, err
+	}
+	return int(p.Number), p.Message, err
 }
