@@ -3,7 +3,6 @@ package service
 import (
 	"math"
 	"strings"
-	"sync"
 
 	"github.com/helloferdie/stdgo/audittrail"
 	"github.com/helloferdie/stdgo/db"
@@ -45,6 +44,9 @@ func List(r *ListRequest, format map[string]interface{}) *libresponse.Default {
 		return res
 	}
 
+	d, _ := db.Open("")
+	defer d.Close()
+
 	params := map[string]interface{}{
 		"id":          r.ID,
 		"operation":   r.Operation,
@@ -62,9 +64,6 @@ func List(r *ListRequest, format map[string]interface{}) *libresponse.Default {
 		"limit":     r.ItemsPerPage,
 	}
 
-	d, _ := db.Open("")
-	defer d.Close()
-
 	list, totalItems, err := audittrail.List(d, params, orderParams)
 	if err != nil {
 		res.Code = 500
@@ -73,15 +72,9 @@ func List(r *ListRequest, format map[string]interface{}) *libresponse.Default {
 	} else {
 		tmp := make([]interface{}, len(list))
 		format["show_relationship"] = r.ShowRelationship
-		var wg sync.WaitGroup
 		for k, obj := range list {
-			wg.Add(1)
-			go func(k int, obj audittrail.AuditTrail) {
-				tmp[k] = FormatOutput(&obj, format)
-				wg.Done()
-			}(k, obj)
+			tmp[k] = FormatOutput(&obj, format)
 		}
-		wg.Wait()
 		res.Success = true
 		res.Code = 200
 		res.Message = "general.success_list"

@@ -2,7 +2,6 @@ package service
 
 import (
 	"math"
-	"sync"
 
 	"github.com/helloferdie/stdgo/db"
 	"github.com/helloferdie/stdgo/language"
@@ -36,6 +35,9 @@ func List(r *ListRequest, format map[string]interface{}) *libresponse.Default {
 		return res
 	}
 
+	d, _ := db.Open("")
+	defer d.Close()
+
 	params := map[string]interface{}{
 		"id":          r.ID,
 		"label":       r.Label,
@@ -48,9 +50,6 @@ func List(r *ListRequest, format map[string]interface{}) *libresponse.Default {
 		"limit":     r.ItemsPerPage,
 	}
 
-	d, _ := db.Open("")
-	defer d.Close()
-
 	list, totalItems, err := language.List(d, params, orderParams)
 	if err != nil {
 		res.Code = 500
@@ -59,15 +58,9 @@ func List(r *ListRequest, format map[string]interface{}) *libresponse.Default {
 	} else {
 		tmp := make([]interface{}, len(list))
 		format["show_relationship"] = r.ShowRelationship
-		var wg sync.WaitGroup
 		for k, obj := range list {
-			wg.Add(1)
-			go func(k int, obj language.Language) {
-				tmp[k] = FormatOutput(&obj, format)
-				wg.Done()
-			}(k, obj)
+			tmp[k] = FormatOutput(&obj, format)
 		}
-		wg.Wait()
 		res.Success = true
 		res.Code = 200
 		res.Message = "general.success_list"
@@ -95,6 +88,7 @@ func View(r *ViewRequest, format map[string]interface{}) *libresponse.Default {
 
 	d, _ := db.Open("")
 	defer d.Close()
+
 	la := new(language.Language)
 	exist, err := la.GetByID(d, r.ID)
 	if err == nil && exist {
@@ -106,7 +100,6 @@ func View(r *ViewRequest, format map[string]interface{}) *libresponse.Default {
 		res.Code = 404
 		res.Error = "general.error_data_not_found"
 	}
-
 	return res
 }
 

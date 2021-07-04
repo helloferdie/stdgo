@@ -35,6 +35,9 @@ func List(r *ListRequest, format map[string]interface{}) *libresponse.Default {
 		return res
 	}
 
+	d, _ := db.Open("")
+	defer d.Close()
+
 	params := map[string]interface{}{
 		"id":         r.ID,
 		"label":      r.Label,
@@ -46,9 +49,6 @@ func List(r *ListRequest, format map[string]interface{}) *libresponse.Default {
 		"start":     ((r.Page - 1) * r.ItemsPerPage),
 		"limit":     r.ItemsPerPage,
 	}
-
-	d, _ := db.Open("")
-	defer d.Close()
 
 	list, totalItems, err := timezone.List(d, params, orderParams)
 	if err != nil {
@@ -88,6 +88,7 @@ func View(r *ViewRequest, format map[string]interface{}) *libresponse.Default {
 
 	d, _ := db.Open("")
 	defer d.Close()
+
 	tz := new(timezone.Timezone)
 	exist, err := tz.GetByID(d, r.ID)
 	if err == nil && exist {
@@ -99,7 +100,6 @@ func View(r *ViewRequest, format map[string]interface{}) *libresponse.Default {
 		res.Code = 404
 		res.Error = "general.error_data_not_found"
 	}
-
 	return res
 }
 
