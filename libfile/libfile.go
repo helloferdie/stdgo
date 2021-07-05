@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"time"
 
+	_ "image/jpeg" // Load img JPEG
+	_ "image/png"  // Load img PNG
 	"mime/multipart"
 	"strings"
 
