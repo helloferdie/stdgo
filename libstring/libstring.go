@@ -48,3 +48,10 @@ func TitleToNumber(s string) int {
 	}
 	return sum - 1
 }
+
+// ToURL - Encode string to URL
+func ToURL(s string) string {
+	s = strings.Trim(s, " ")
+	s = strings.ReplaceAll(s, " ", "%20")
+	return s
+}
