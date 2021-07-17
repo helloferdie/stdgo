@@ -14,12 +14,13 @@ import (
 
 // Timezone -
 type Timezone struct {
-	ID        int64        `db:"id" json:"id"`
-	Label     string       `db:"label" json:"label"`
-	UTFOffset string       `db:"utc_offset" json:"utc_offset"`
-	CreatedAt sql.NullTime `db:"created_at" json:"created_at"`
-	UpdatedAt sql.NullTime `db:"updated_at" json:"updated_at"`
-	DeletedAt sql.NullTime `db:"deleted_at" json:"deleted_at"`
+	ID         int64        `db:"id" json:"id"`
+	Label      string       `db:"label" json:"label"`
+	LabelShort string       `db:"label_short" json:"label_short"`
+	UTFOffset  string       `db:"utc_offset" json:"utc_offset"`
+	CreatedAt  sql.NullTime `db:"created_at" json:"created_at"`
+	UpdatedAt  sql.NullTime `db:"updated_at" json:"updated_at"`
+	DeletedAt  sql.NullTime `db:"deleted_at" json:"deleted_at"`
 }
 
 var moduleName = "timezone"
