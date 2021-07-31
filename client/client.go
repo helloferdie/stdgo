@@ -1,4 +1,4 @@
-package timezone
+package client
 
 import (
 	"database/sql"
@@ -11,32 +11,33 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// Timezone -
-type Timezone struct {
-	ID         int64        `db:"id" json:"id"`
-	Label      string       `db:"label" json:"label"`
-	LabelShort string       `db:"label_short" json:"label_short"`
-	UTFOffset  string       `db:"utc_offset" json:"utc_offset"`
-	CreatedAt  sql.NullTime `db:"created_at" json:"created_at"`
-	UpdatedAt  sql.NullTime `db:"updated_at" json:"updated_at"`
-	DeletedAt  sql.NullTime `db:"deleted_at" json:"deleted_at"`
+// Client -
+type Client struct {
+	ID           int64        `db:"id" json:"id"`
+	UUID         string       `db:"uuid" json:"uuid"`
+	ClientName   string       `db:"client_name" json:"client_name"`
+	ClientSecret string       `db:"client_secret" json:"client_secret"`
+	IsActive     bool         `db:"is_active" json:"is_active"`
+	CreatedAt    sql.NullTime `db:"created_at" json:"created_at"`
+	UpdatedAt    sql.NullTime `db:"updated_at" json:"updated_at"`
+	DeletedAt    sql.NullTime `db:"deleted_at" json:"deleted_at"`
 }
 
-var moduleName = "timezone"
-var table = "timezones"
+var moduleName = "client"
+var table = "clients"
 
 // Create -
-func (tz *Timezone) Create(d *sqlx.DB, creatorID int64) (int64, error) {
-	query, val := db.PrepareInsert(table, tz, []string{})
+func (cl *Client) Create(d *sqlx.DB, creatorID int64) (int64, error) {
+	query, val := db.PrepareInsert(table, cl, []string{})
 	id, _, err := db.Exec(d, query, val)
 	if err == nil {
-		tz.GetByID(d, id)
+		cl.GetByID(d, id)
 		go event.CreateAuditTrail(map[string]interface{}{
 			"operation":   "add",
 			"module_name": moduleName,
 			"table_name":  table,
-			"table_pk":    strconv.FormatInt(tz.ID, 10),
-			"change":      libstring.JSONEncode(tz),
+			"table_pk":    strconv.FormatInt(cl.ID, 10),
+			"change":      libstring.JSONEncode(cl),
 			"remark":      "",
 			"created_by":  creatorID,
 		})
@@ -45,11 +46,11 @@ func (tz *Timezone) Create(d *sqlx.DB, creatorID int64) (int64, error) {
 }
 
 // Save -
-func (tz *Timezone) Save(d *sqlx.DB, creatorID int64) error {
-	old := new(Timezone)
-	old.GetByID(d, tz.ID)
+func (cl *Client) Save(d *sqlx.DB, creatorID int64) error {
+	old := new(Client)
+	old.GetByID(d, cl.ID)
 
-	query, val, diff := db.PrepareUpdate(table, old, tz, []string{}, "", map[string]interface{}{"id": tz.ID})
+	query, val, diff := db.PrepareUpdate(table, old, cl, []string{}, "", map[string]interface{}{"id": cl.ID})
 	if len(diff) > 0 {
 		_, _, err := db.Exec(d, query, val)
 		if err == nil {
@@ -57,7 +58,7 @@ func (tz *Timezone) Save(d *sqlx.DB, creatorID int64) error {
 				"operation":   "edit",
 				"module_name": moduleName,
 				"table_name":  table,
-				"table_pk":    strconv.FormatInt(tz.ID, 10),
+				"table_pk":    strconv.FormatInt(cl.ID, 10),
 				"change":      libstring.JSONEncode(diff),
 				"remark":      "",
 				"created_by":  creatorID,
@@ -69,8 +70,8 @@ func (tz *Timezone) Save(d *sqlx.DB, creatorID int64) error {
 }
 
 // Delete -
-func (tz *Timezone) Delete(d *sqlx.DB, creatorID int64, softDelete bool) error {
-	query, val := db.PrepareDelete(table, tz.ID, softDelete)
+func (cl *Client) Delete(d *sqlx.DB, creatorID int64, softDelete bool) error {
+	query, val := db.PrepareDelete(table, cl.ID, softDelete)
 	_, _, err := db.Exec(d, query, val)
 	if err == nil {
 		go func() {
@@ -82,8 +83,8 @@ func (tz *Timezone) Delete(d *sqlx.DB, creatorID int64, softDelete bool) error {
 				"operation":   "edit",
 				"module_name": moduleName,
 				"table_name":  table,
-				"table_pk":    strconv.FormatInt(tz.ID, 10),
-				"change":      libstring.JSONEncode(tz),
+				"table_pk":    strconv.FormatInt(cl.ID, 10),
+				"change":      libstring.JSONEncode(cl),
 				"remark":      remark,
 				"created_by":  creatorID,
 			})
@@ -93,8 +94,8 @@ func (tz *Timezone) Delete(d *sqlx.DB, creatorID int64, softDelete bool) error {
 }
 
 // List -
-func List(d *sqlx.DB, params map[string]interface{}, orderParams map[string]interface{}) ([]Timezone, int64, error) {
-	list := []Timezone{}
+func List(d *sqlx.DB, params map[string]interface{}, orderParams map[string]interface{}) ([]Client, int64, error) {
+	list := []Client{}
 	values := map[string]interface{}{}
 	condition := "AND deleted_at IS NULL "
 
@@ -104,17 +105,22 @@ func List(d *sqlx.DB, params map[string]interface{}, orderParams map[string]inte
 	}, params, condition, values)
 
 	condition, values, _ = libquery.QueryCondition(libquery.Config{
-		Param:     "label",
+		Param:     "client_name",
 		Condition: "like",
 	}, params, condition, values)
 
 	condition, values, _ = libquery.QueryCondition(libquery.Config{
-		Param:     "utc_offset",
+		Param:     "client_secret",
+		Condition: "like",
+	}, params, condition, values)
+
+	condition, values, _ = libquery.QueryCondition(libquery.Config{
+		Param:     "uuid",
 		Condition: "like",
 	}, params, condition, values)
 
 	defaultOrder := map[string]interface{}{
-		"field":     "label",
+		"field":     "uuid",
 		"direction": "asc",
 		"start":     int64(0),
 		"limit":     int64(10),
@@ -138,49 +144,31 @@ func List(d *sqlx.DB, params map[string]interface{}, orderParams map[string]inte
 }
 
 // GetByID -
-func (tz *Timezone) GetByID(d *sqlx.DB, id int64) (bool, error) {
+func (cl *Client) GetByID(d *sqlx.DB, id int64) (bool, error) {
 	query := "SELECT * FROM " + table + " WHERE id = :id AND deleted_at IS NULL LIMIT 1"
 	values := map[string]interface{}{
 		"id": id,
 	}
-	exist, err := db.Get(d, tz, query, values)
+	exist, err := db.Get(d, cl, query, values)
 	return exist, err
 }
 
-// GetByLabel -
-func (tz *Timezone) GetByLabel(d *sqlx.DB, label string) (bool, error) {
-	query := "SELECT * FROM " + table + " WHERE label LIKE :label AND deleted_at IS NULL LIMIT 1"
+// GetByUUID -
+func (cl *Client) GetByUUID(d *sqlx.DB, uuid string) (bool, error) {
+	query := "SELECT * FROM " + table + " WHERE uuid = :uuid AND deleted_at IS NULL LIMIT 1"
 	values := map[string]interface{}{
-		"label": label,
+		"uuid": uuid,
 	}
-	exist, err := db.Get(d, tz, query, values)
+	exist, err := db.Get(d, cl, query, values)
 	return exist, err
 }
 
-// MassCheckID -
-func MassCheckID(d *sqlx.DB, list []int64) (bool, error) {
-	type pagination struct {
-		TotalItems int `db:"total"`
+// GetByClientName -
+func (cl *Client) GetByClientName(d *sqlx.DB, name string) (bool, error) {
+	query := "SELECT * FROM " + table + " WHERE client_name LIKE :client_name AND deleted_at IS NULL LIMIT 1"
+	values := map[string]interface{}{
+		"client_name": name,
 	}
-	p := new(pagination)
-
-	values := map[string]interface{}{}
-	condition := "AND deleted_at IS NULL "
-
-	params := map[string]interface{}{"id": list}
-	condition, values, _ = libquery.QueryCondition(libquery.Config{
-		Param:     "id",
-		Condition: "in",
-	}, params, condition, values)
-
-	query := "SELECT COUNT(" + table + ".id) AS total FROM " + table + " WHERE 1=1 " + condition
-	_, err := db.Get(d, p, query, values)
-	if err != nil {
-		return false, err
-	}
-
-	if p.TotalItems == len(list) {
-		return true, nil
-	}
-	return false, nil
+	exist, err := db.Get(d, cl, query, values)
+	return exist, err
 }
