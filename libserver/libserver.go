@@ -433,3 +433,12 @@ func GetRealIP(c echo.Context) string {
 	}
 	return ""
 }
+
+// SkipperRoute -
+func SkipperRoute(c echo.Context, root string, list []string) bool {
+	_, inSlice := libslice.Contains(strings.Replace(c.Request().RequestURI, root, "", 1), list)
+	if inSlice {
+		return true
+	}
+	return false
+}
