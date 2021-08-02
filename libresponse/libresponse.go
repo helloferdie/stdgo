@@ -5,7 +5,7 @@ import (
 
 	"github.com/helloferdie/stdgo/libtime"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 )
 
 // Default - Default response
