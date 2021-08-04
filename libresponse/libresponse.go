@@ -43,7 +43,7 @@ func (res *Default) EmptyList() {
 	res.Success = true
 	res.Message = "general.success_list"
 	res.Data = map[string]interface{}{
-		"items":       nil,
+		"items":       []interface{}{},
 		"total_items": 0,
 		"total_pages": 0,
 	}
