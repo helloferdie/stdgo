@@ -37,6 +37,18 @@ func GetDefault() *Default {
 	return res
 }
 
+// EmptyList - Return success empty list
+func (res *Default) EmptyList() {
+	res.Code = 200
+	res.Success = true
+	res.Message = "general.success_list"
+	res.Data = map[string]interface{}{
+		"items":       nil,
+		"total_items": 0,
+		"total_pages": 0,
+	}
+}
+
 // MapOutput -
 func MapOutput(obj interface{}, stdTimestamp bool, format map[string]interface{}) map[string]interface{} {
 	tz, ok := format["tz"].(string)
