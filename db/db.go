@@ -318,7 +318,7 @@ func PrepareUpdate(table string, old interface{}, new interface{}, skip []string
 	}
 
 	if !isCustom {
-		col += ", updated_at = :updated_at"
+		col += ", updated_at = :updated_at, deleted_at = NULL"
 		v["updated_at"] = time.Now().UTC()
 	}
 	if condition == "" {
