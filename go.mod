@@ -14,6 +14,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/labstack/echo/v4 v4.5.0
 	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/mailgun/mailgun-go/v4 v4.5.2 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/sony/sonyflake v1.0.0
